@@ -6,7 +6,7 @@
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
 
-
+COOKIES_ENABLED = False
 SPIDER_MODULES = ['crawler.spiders']
 NEWSPIDER_MODULE = 'crawler.spiders'
 DEFAULT_ITEM_CLASS = 'crawler.items.Profile'
