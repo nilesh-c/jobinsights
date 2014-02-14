@@ -1,11 +1,12 @@
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.selector import Selector
 from scrapy.http import Request
+from scrapy.exceptions import CloseSpider
 from telnetlib import Telnet
 from fake_useragent import UserAgent
 from crawler.items import Profile
+from crawler import parser
 import re, os
-#from crawler.linkextractors import LinkedinProfLinkExtractor
 
 class LinkedinSpider(CrawlSpider):
     serverIP = os.environ['OPENSHIFT_PYTHON_IP'] if ('OPENSHIFT_PYTHON_IP' in os.environ) else '127.0.0.1'
@@ -20,9 +21,9 @@ class LinkedinSpider(CrawlSpider):
     start_urls = [
         'http://www.linkedin.com/pub/suzan-alaswad-phd/51/804/459?trk=pub-pbmap',
         'http://www.linkedin.com/in/nileshchakraborty',
-	    'http://sg.linkedin.com/pub/debarka-sengupta/7/751/360'
-    	'http://dk.linkedin.com/in/rhodesnu'
-	    'http://www.linkedin.com/in/officialjohnmaxwell'
+	    'http://sg.linkedin.com/pub/debarka-sengupta/7/751/360',
+    	'http://dk.linkedin.com/in/rhodesnu',
+	    'http://www.linkedin.com/in/officialjohnmaxwell',
     ]
 
     def make_requests_from_url(self, url):
@@ -32,15 +33,16 @@ class LinkedinSpider(CrawlSpider):
         self.count += 1
         if self.count % 500 == 0:
             self.changeTorIP()
+        if self.count == 242:
+            raise CloseSpider("Finished scraping 200 profiles.")
         sel = Selector(response)
         for i in sel.xpath("//strong/a[contains(@href,'linkedin')]/@href").extract():
             if "http" not in i:
                 continue
             #print "FOUND:%s" % i
             yield Request(url=i, headers={'User-Agent':self.ua.random, 'Connection':'Keep-Alive'}, meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)})
-        item = Profile()
-        item['url'] = response.url
-        item['workingat'] = self.stripspace.sub(" ", self.stripnt.sub(" ", str(sel.xpath("string(//dd[@class='summary-current']//li)").extract())))
+
+        item = parser.parseProfile(response)
         yield item
 
     def changeTorIP(self):
