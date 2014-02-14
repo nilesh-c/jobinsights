@@ -1,7 +1,7 @@
 #!/bin/bash
 if [ $# -lt 1 ]
 then
-	echo "$0 <job output dir> [<PRIVOXY_PORT> <TOR_CONTROL_PORT> <scrapy binary>]"
+	echo "$0 <job output dir> [PRIVOXY_PORT] [TOR_CONTROL_PORT] [scrapy binary]"
 	exit;
 fi
 bin=$4
