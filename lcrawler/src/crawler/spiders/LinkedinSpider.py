@@ -2,6 +2,7 @@ from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.selector import Selector
 from scrapy.http import Request
 from scrapy.exceptions import CloseSpider
+from scrapy import log
 from telnetlib import Telnet
 from fake_useragent import UserAgent
 from crawler.items import Profile
@@ -30,6 +31,11 @@ class LinkedinSpider(CrawlSpider):
             return Request(url, headers={'User-Agent':self.ua.random, 'Connection':'Keep-Alive'}, meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)}, dont_filter=True)
 
     def parse(self, response):
+        if response.status == 999:
+            self.changeTorIP()
+            self.log("Code 999 received. Changing Tor IP and sleeping 4s.", level=log.WARNING)
+            time.sleep(4)
+            yield Request(url=response.url, headers={'User-Agent':self.ua.random, 'Connection':'Keep-Alive'}, meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)})
         self.count += 1
         if self.count % 500 == 0:
             self.changeTorIP()
@@ -42,6 +48,7 @@ class LinkedinSpider(CrawlSpider):
             #print "FOUND:%s" % i
             yield Request(url=i, headers={'User-Agent':self.ua.random, 'Connection':'Keep-Alive'}, meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)})
 
+        # if "in.linkedin" in response.url:
         item = parser.parseProfile(response)
         yield item
 
