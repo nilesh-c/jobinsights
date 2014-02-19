@@ -5,6 +5,7 @@
 #
 #     http://doc.scrapy.org/en/latest/topics/settings.html
 #
+import os
 
 # DUMPSTATS_ENABLED = True
 # DUMPSTATS_INTERVAL = 2
