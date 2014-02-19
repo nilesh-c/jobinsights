@@ -6,8 +6,9 @@ import os, time
 
 class TestSpider(CrawlSpider):
     serverIP = os.environ['OPENSHIFT_PYTHON_IP'] if ('OPENSHIFT_PYTHON_IP' in os.environ) else '127.0.0.1'
-    privoxyPort = os.environ['PRIVOXY_PORT'] if ('PRIVOXY_PORT' in os.environ) else '8118'
+    privoxyPort = os.environ['PRIVOXY_PORT'] if ('PRIVOXY_PORT' in os.environ) else '9050'
     torControlPort = os.environ['TOR_CONTROL_PORT'] if ('TOR_CONTROL_PORT' in os.environ) else '9051'
+    proxyPort = None
     count = 0
     name = "test"
     domain_name = "wtfismyip.com"
@@ -16,17 +17,18 @@ class TestSpider(CrawlSpider):
     start_urls = ["http://wtfismyip.com/text"]
 
     def make_requests_from_url(self, url):
-        return Request(url, headers={'Connection':'Keep-Alive'}, meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)}, dont_filter=True)
+        if self.proxyPort == None:
+            self.proxyPort = self.getProxyPort()
+        return Request(url, headers={'Connection':'Keep-Alive'}, meta={'proxy':"http://%s:%s" % (self.serverIP, self.proxyPort.next())}, dont_filter=True)
  
     def parse(self, response):
         self.count += 1
-        if self.count % 10 == 0:
-            tn = Telnet(self.serverIP, int(self.torControlPort))
-            tn.write("AUTHENTICATE\r\n")
-            tn.read_until("250 OK", 2)
-            tn.write("signal NEWNYM\r\n")
-            tn.read_until("250 OK", 2)
-            tn.write("QUIT\r\n")
-            tn.close()
         print response.body
-        yield Request(self.start_urls[0], headers={'Connection':'Keep-Alive'}, dont_filter=True, meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)})
+        time.sleep(2)
+        yield Request(self.start_urls[0], headers={'Connection':'Keep-Alive'}, dont_filter=True, meta={'proxy':"http://%s:%s" % (self.serverIP, self.proxyPort.next())})
+
+    def getProxyPort(self):
+        i = int(self.privoxyPort)
+        while True:
+            yield i
+            #i = (i + 1) if i < (int(self.privoxyPort) + 5) else int(self.privoxyPort)
