@@ -1,5 +1,5 @@
 from telnetlib import Telnet
-import time, sys
+import time, sys, os
 
 # for i in range(9060, 9066):
 i = sys.argv[1]
