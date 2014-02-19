@@ -1,7 +1,14 @@
 from items import Profile, ProfileGroup, ProfileCertification, ProfileEducation, ProfileCompany
+from scrapy.selector import Selector
 from pyquery import PyQuery as pq
 from lxml import etree
 from StringIO import StringIO
+
+def getProfilePageURLs(response):
+	return Selector(response).xpath("//strong/a[contains(@href,'linkedin')]/@href").extract()
+
+def getSearchPageURLs(response):
+	return [i.get('href') for i in d('.vcard a[title]:not(.profile-photo)')]
 
 #Quick function to return the profile generated from Response
 def parseProfile(response):
@@ -53,7 +60,10 @@ class ProfileParser():
 			periods = i[2].getchildren()
 			if len(periods) > 0:
 				for period in [p.values() for p in periods[0:2]]: #set dtstart and dtend
-					edu[period[0]] = period[1]
+					try:
+						edu[period[0]] = period[1]
+					except Exception:
+						pass
 			education.append(dict(edu))
 
 		self.assignIfNotNone('education', education)
