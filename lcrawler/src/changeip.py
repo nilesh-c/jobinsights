@@ -2,7 +2,7 @@ from telnetlib import Telnet
 import time, sys, os
 
 # for i in range(9060, 9066):
-i = sys.argv[1]
+i = int(sys.argv[1])
 serverIP = os.environ['OPENSHIFT_PYTHON_IP'] if ('OPENSHIFT_PYTHON_IP' in os.environ) else '127.0.0.1'
 tn = Telnet(serverIP, i)
 tn.write("AUTHENTICATE\r\n")
