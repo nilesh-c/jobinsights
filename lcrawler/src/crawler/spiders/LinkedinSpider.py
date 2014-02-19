@@ -12,7 +12,7 @@ import re, os, time
 class LinkedinSpider(CrawlSpider):
     handle_httpstatus_list = [999]
     serverIP = os.environ['OPENSHIFT_PYTHON_IP'] if ('OPENSHIFT_PYTHON_IP' in os.environ) else '127.0.0.1'
-    privoxyPort = os.environ['PRIVOXY_PORT'] if ('PRIVOXY_PORT' in os.environ) else '9050'
+    torProxyPort = os.environ['TOR_PROXY_PORT'] if ('TOR_PROXY_PORT' in os.environ) else '9050'
     torControlPort = os.environ['TOR_CONTROL_PORT'] if ('TOR_CONTROL_PORT' in os.environ) else '9051'
     proxyPort = None
     count = 0
@@ -60,7 +60,7 @@ class LinkedinSpider(CrawlSpider):
             self.proxyPort = self.getProxyPort()
         # yield seed URLs for profiles to be parsed
         return Request(url, headers={'User-Agent':self.ua.random, 'Connection':'Keep-Alive'},
-            meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)}, callback=self.parse, dont_filter=True)
+            meta={'proxy':"http://%s:%s" % (self.serverIP, self.torProxyPort)}, callback=self.parse, dont_filter=True)
 
     def parse(self, response):
         if response.status == 999:
@@ -68,7 +68,7 @@ class LinkedinSpider(CrawlSpider):
             self.log("Code 999 received. Changing Tor IP and sleeping 4s.", level=log.WARNING)
             time.sleep(4)
             yield Request(url=response.url, headers={'User-Agent':self.ua.random, 'Connection':'Keep-Alive'},
-                meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)}, callback=self.parse)
+                meta={'proxy':"http://%s:%s" % (self.serverIP, self.torProxyPort)}, callback=self.parse)
 
         self.count += 1
         if self.count % 500 == 0:
@@ -82,7 +82,7 @@ class LinkedinSpider(CrawlSpider):
             #print "FOUND:%s" % i
             # yield URLs for profiles to be parsed
             yield Request(url=i, headers={'User-Agent':self.ua.random, 'Connection':'Keep-Alive'},
-                meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)}, callback=self.parse)
+                meta={'proxy':"http://%s:%s" % (self.serverIP, self.torProxyPort)}, callback=self.parse)
 
         if "in.linkedin" in response.url:
             item = parser.parseProfile(response)
@@ -92,7 +92,7 @@ class LinkedinSpider(CrawlSpider):
             searchURI = 'http://in.linkedin.com/pub/dir/?first=%s&last=%s&search=Search&searchType=fps'
             for u in ((fn, ''), (ln, ''), ('', fn), ('', ln)):
                 yield Request(url=searchURI % u, headers={'User-Agent':self.ua.random, 'Connection':'Keep-Alive'},
-                    meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)}, callback=self.parseSearchPage)
+                    meta={'proxy':"http://%s:%s" % (self.serverIP, self.torProxyPort)}, callback=self.parseSearchPage)
             yield item
 
     def parseSearchPage(self, response):
@@ -102,7 +102,7 @@ class LinkedinSpider(CrawlSpider):
             if 'in.linkedin' in u:
                 # yield URLs for profiles to be parsed
                 yield Request(url=u, headers={'User-Agent':self.ua.random, 'Connection':'Keep-Alive'},
-                    meta={'proxy':"http://%s:%s" % (self.serverIP, self.privoxyPort)}, callback=self.parse)
+                    meta={'proxy':"http://%s:%s" % (self.serverIP, self.torProxyPort)}, callback=self.parse)
 
     def changeTorIP(self):
         tn = Telnet(self.serverIP, int(self.torControlPort))
@@ -114,7 +114,7 @@ class LinkedinSpider(CrawlSpider):
         tn.close()
 
     def getProxyPort(self):
-        i = int(self.privoxyPort)
+        i = int(self.torProxyPort)
         while True:
             yield i
-            i = (i + 1) if i < (int(self.privoxyPort) + 5) else int(self.privoxyPort)
+            i = (i + 1) if i < (int(self.torProxyPort) + 5) else int(self.torProxyPort)

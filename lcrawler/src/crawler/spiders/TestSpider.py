@@ -6,7 +6,7 @@ import os, time
 
 class TestSpider(CrawlSpider):
     serverIP = os.environ['OPENSHIFT_PYTHON_IP'] if ('OPENSHIFT_PYTHON_IP' in os.environ) else '127.0.0.1'
-    privoxyPort = os.environ['PRIVOXY_PORT'] if ('PRIVOXY_PORT' in os.environ) else '9050'
+    torProxyPort = os.environ['TOR_PROXY_PORT'] if ('TOR_PROXY_PORT' in os.environ) else '9050'
     torControlPort = os.environ['TOR_CONTROL_PORT'] if ('TOR_CONTROL_PORT' in os.environ) else '9051'
     proxyPort = None
     count = 0
@@ -28,7 +28,7 @@ class TestSpider(CrawlSpider):
         yield Request(self.start_urls[0], headers={'Connection':'Keep-Alive'}, dont_filter=True, meta={'proxy':"http://%s:%s" % (self.serverIP, self.proxyPort.next())})
 
     def getProxyPort(self):
-        i = int(self.privoxyPort)
+        i = int(self.torProxyPort)
         while True:
             yield i
-            #i = (i + 1) if i < (int(self.privoxyPort) + 5) else int(self.privoxyPort)
+            #i = (i + 1) if i < (int(self.torProxyPort) + 5) else int(self.torProxyPort)

@@ -1,7 +1,7 @@
 #!/bin/bash
 if [ $# -lt 1 ]
 then
-	echo "$0 <job output dir> [PRIVOXY_PORT] [TOR_CONTROL_PORT] [scrapy binary]"
+	echo "$0 <job output dir> [TOR_PROXY_PORT] [TOR_CONTROL_PORT] [scrapy binary]"
 	exit;
 fi
 bin=$4
@@ -17,6 +17,6 @@ then
 fi
 if [ -z "$2" ]
 then
-        priv='30002'
+        priv='30000'
 fi
-time PRIVOXY_PORT=$priv TOR_CONTROL_PORT=$tor $bin crawl linkedin -s JOBDIR=$1 --output=$1/output.txt
+time TOR_PROXY_PORT=$priv TOR_CONTROL_PORT=$tor $bin crawl linkedin -s JOBDIR=$1 --output=$1/output.txt --loglevel=WARNING --logfile=scrapy.log -t bz2json
